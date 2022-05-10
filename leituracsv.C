@@ -17,39 +17,63 @@ void leituracsv()
 {
 	ajusta_graficos();
 	
-	double AUXdataX,AUXdataY;
-	vector<double> AdataX, AdataY;
-	vector<double> dataX, dataY;
-	vector<double> mX, mY;
-	vector<double> maxX, maxY;
-	vector<double> minX, minY;
-	vector<double> avgX, avgY;
-	vector<double> nX, nY;
-	vector<double> NX, NY;
-	vector<double> nSx, nSy;
-	vector<double> simX, simY;
+	double	AUXdataX,	AUXdataY;
+
+	vector<double> AdataX, 	AdataY;
+	vector<double> dataX, 	dataY;
+	vector<double> mX, 		mY;
+	vector<double> maxX, 	maxY;
+	vector<double> minX, 	minY;
+	vector<double> avgX, 	avgY;
+	vector<double> nX, 		nY;
+	vector<double> NX, 		NY;
+	vector<double> nSx, 	nSy;
+	vector<double> simX, 	simY;
 
 	bool lmax = true;
 	bool lmin = true;
 
-	int i = 0;
-	int mSize = 4;
-	int tSize = 8;
-	double test = 0;
-	double Nsub = 1.45;
-	double Tmax,Tmin;
+	int 	i 		= 0;
+	int 	mSize 	= 8;
+	int 	tSize 	= 10;
+	double 	test 	= 0;
+	double 	Nsub 	= 1.45;
+	double 	Tmax
+	double 	Tmin;
 
-	int minWL = 485;
-	int maxWL = 1500;
+	int minWL 		= 485;
+	int maxWL 		= 1500;
+	int minTrans 	= 80;
+	int maxTrans 	= 92;
+	int minThic 	= 2000;
+	int maxThic 	= 3500;
 
-	double seletor = 2.2;
-	int tamanhoX = int(1920/seletor);
-	int tamanhoY = int(1080/seletor);
+	double 	seletor		= 2.2;
+	int 	tamanhoX	= int(1920/seletor);
+	int 	tamanhoY	= int(1080/seletor);
 
-	double partial = 0;
+	double partial 	= 0;
+
+	string name 	("e");
 	
-	system("rm dados_dat.txt");
-	system("touch dados_dat.txt");
+	string filename	(name);
+	filename.append	(".asc");
+
+	string pumaname	(name);
+	pumaname.append	("_dat.txt");
+	
+	string remove	("rm ");
+	remove.append	(pumaname);
+	
+	string touch	("touch ");
+	touch.append	(pumaname);
+
+	string refrac	(name);
+	refrac.append	("_refactiveindex.txt");
+
+
+	system(remove.c_str());
+	system(touch.c_str());
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// começando pela leitura do indice de refração do substrato. 
@@ -74,7 +98,7 @@ void leituracsv()
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// agora a leitura dos dados.    
 
-	FILE* arquivo1 = fopen("sampleC_T.asc","r"); 						// abre o arquivo de dados
+	FILE* arquivo1 = fopen(filename.c_str(),"r"); 						// abre o arquivo de dados
 
 
 	for (int j = 0; j < 90; ++j) 									// pula uma quantidade de linhas
@@ -89,25 +113,6 @@ void leituracsv()
 	}
 
 	fclose(arquivo1);												// fechar o arquivo
-
-	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// agora a leitura dos dados.    
-
-	FILE* simArquivo = fopen("trnsmitance.txt","r"); 						// abre o arquivo de dados
-
-
-	for (int j = 0; j < 90; ++j) 									// pula uma quantidade de linhas
-	{
-		fscanf(simArquivo, "%*[^\n]\n", NULL);
-	}
-
-	while(fscanf(simArquivo,"%lf	%lf\n",&AUXdataX,&AUXdataY)!= EOF)	// leitura formatada dos dados 
-	{
-		simX.push_back(AUXdataX);
-		simY.push_back(AUXdataY);
-	}
-
-	fclose(simArquivo);												// fechar o arquivo
 
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -139,16 +144,10 @@ void leituracsv()
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// exporta dos dados no arquivo "dados_dat.txt".
 	
-	FILE* saida = fopen("dados_dat.txt","w"); 
+	FILE* saida = fopen(pumaname.c_str(),"w"); 
 
-	// int filesize = 0;
-	
-	// for (int i = 0; i < mX.size() && mX[i] > 400; ++i)
-	// {
-	// 	filesize++;
-	// }
 
-	fprintf(saida, "%d\n",mX.size()+1);
+	fprintf(saida, "%lu\n",mX.size()+1);
 	for (int i = 0; i < mX.size(); ++i)
 	{
 		fprintf(saida,"%d %lf\n", int(mX[i]), mY[i]/100);
@@ -174,7 +173,7 @@ void leituracsv()
 
 
 	auxplot2->GetXaxis()->SetRangeUser(0.8*minWL,1.2*maxWL);				// ajuste dos eixos
-	auxplot2->GetYaxis()->SetRangeUser(73,83);
+	auxplot2->GetYaxis()->SetRangeUser(minTrans,maxTrans);
 
 	auxplot2->Draw("AL");
 
@@ -306,6 +305,18 @@ void leituracsv()
 	grafico2->BuildLegend();
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	// exporta os resultados
+
+	FILE* saida2 = fopen(refrac.c_str(),"w"); 
+
+
+	for (int i = 0; i < nX.size(); ++i)
+	{
+		fprintf(saida2,"%d %lf\n", int(nX[i]), nY[i]);
+	}
+	fclose(saida2);
+
+	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// calculando a espessura
 	
 
@@ -313,6 +324,7 @@ void leituracsv()
 
 	double lambda1,lambda2, n1, n2, thicknessAVG = 0;
 	vector<double> thickness;
+	int AuxAVG = 0;
 
 	for (int i = 0; i < maxX.size()-1 && maxX[i] > minWL; ++i)
 	{
@@ -324,15 +336,28 @@ void leituracsv()
 
 		thickness.push_back(0.5*lambda1*lambda2*(1/(-lambda1*n2+lambda2*n1)));
 
-		cout << n1 << " " << n2 << " " << lambda1 << " " << lambda2 << " " << thickness[i] << endl;
+
+		if (thickness[i] < maxThic && thickness[i] > minThic)
+		{
+			cout << n1 << " " << n2 << " " << lambda1 << " " << lambda2 << " " << thickness[i]  << " used" << endl;
+		}
+		else
+		{
+			cout << n1 << " " << n2 << " " << lambda1 << " " << lambda2 << " " << thickness[i] << " not used" << endl;
+		}
 	}
 
 	for (int i = 0; i < thickness.size(); ++i)
 	{
-		thicknessAVG = thicknessAVG + thickness[i];
+		if (thickness[i] < maxThic && thickness[i] > minThic)
+		{
+			thicknessAVG = thicknessAVG + thickness[i];
+			AuxAVG++;
+		}
+		
 	}
 
-	thicknessAVG = thicknessAVG/thickness.size();
+	thicknessAVG = thicknessAVG/AuxAVG;
 	cout << "média " << thicknessAVG << endl;
 
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
