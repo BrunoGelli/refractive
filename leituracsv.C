@@ -38,7 +38,8 @@ void leituracsv()
 	int 	tSize 	= 10;
 	double 	test 	= 0;
 	double 	Nsub 	= 1.45;
-	double 	Tmax
+	int 	Thic 	= 1750;
+	double 	Tmax;
 	double 	Tmin;
 
 	int minWL 		= 485;
@@ -54,7 +55,7 @@ void leituracsv()
 
 	double partial 	= 0;
 
-	string name 	("e");
+	string name 	("b");
 	
 	string filename	(name);
 	filename.append	(".asc");
@@ -323,7 +324,9 @@ void leituracsv()
 	TSpline3* splineGn = new TSpline3("Sample refractive index", Gn);
 
 	double lambda1,lambda2, n1, n2, thicknessAVG = 0;
+	double delta;
 	vector<double> thickness;
+	vector<double> refac_estimated;
 	int AuxAVG = 0;
 
 	for (int i = 0; i < maxX.size()-1 && maxX[i] > minWL; ++i)
@@ -331,19 +334,21 @@ void leituracsv()
 		lambda1 = maxX[i];
 		lambda2 = maxX[i+1];
 
+		delta = lambda2 - lambda1;
+
 		n1 		= splineGn->Eval(maxX[i]);
 		n2		= splineGn->Eval(maxX[i+1]);
 
 		thickness.push_back(0.5*lambda1*lambda2*(1/(-lambda1*n2+lambda2*n1)));
-
+		refac_estimated.push_back(0.5*lambda1*lambda2/(Thic*delta));
 
 		if (thickness[i] < maxThic && thickness[i] > minThic)
 		{
-			cout << n1 << " " << n2 << " " << lambda1 << " " << lambda2 << " " << thickness[i]  << " used" << endl;
+			cout << n1 << " " << n2 << " " << lambda1 << " " << lambda2 << " " << thickness[i]  << " used. Real: " << Thic << " " << refac_estimated[i] << endl;
 		}
 		else
 		{
-			cout << n1 << " " << n2 << " " << lambda1 << " " << lambda2 << " " << thickness[i] << " not used" << endl;
+			cout << n1 << " " << n2 << " " << lambda1 << " " << lambda2 << " " << thickness[i] << " not used. Real: " << Thic << " " << refac_estimated[i] << endl;
 		}
 	}
 
