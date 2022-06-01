@@ -14,8 +14,8 @@ void ajusta_graficos();
 
 vector<string> namelist(string list);
 
-vector<double> readX(string filename);
-vector<double> readY(string filename);
+vector<double> readX(int linhas, string filename);
+vector<double> readY(int linhas, string filename);
 
 void multi_auto()
 {
@@ -27,7 +27,7 @@ void multi_auto()
  	std::vector<string> fileNames;
 
 	system("rm lista.txt");
-	system("ls -1 *long.txt >> lista.txt");
+	system("ls -1 *refractiveindex.txt >> lista.txt");
  	fileNames = namelist("lista.txt");
  
  	int runsize = fileNames.size();
@@ -39,10 +39,20 @@ void multi_auto()
 	std::vector<double> dataX;
 	std::vector<double> dataY;
 
+	std::vector<double> avgX;
+	std::vector<double> avgY;
+
 	std::vector<TGraph *> plot;
 
+	int linhas 		= 0;
+	int points 		= 100;
+	int nentries 	= 0;
 
-	int nentries = 0;
+	double step;
+	double auxAvg;
+
+	double maximum = 10000;
+	double minimum = 0;
 
 	double seletor = 2.2;
 	int tamanhoX = int(1920/seletor);
@@ -56,8 +66,8 @@ void multi_auto()
 	// abre o arquivo
 	for (int i = 0; i < runsize; ++i)
 	{
-		dataX = readX(fileNames[i].c_str());
-		dataY = readY(fileNames[i].c_str());
+		dataX = readX(linhas, fileNames[i].c_str());
+		dataY = readY(linhas, fileNames[i].c_str());
 		nentries = dataX.size();
 		cout << "Numero de linhas do arquivo '" << fileNames[i].c_str() << "': "<< nentries << endl;
 		FulldataX.push_back(dataX);
@@ -66,8 +76,59 @@ void multi_auto()
 		dataY.clear();
 		cout << endl;	
 	}
-//	faremos agora o grafico deste dados
 
+	//	Cria as interpolações
+
+	vector<ROOT::Math::Interpolator *> Interp;
+
+	for (int i = 0; i < runsize; ++i)
+	{
+		auto auxInterp = new ROOT::Math::Interpolator(FulldataX[i],FulldataY[i],ROOT::Math::Interpolation::kAKIMA);
+		Interp.push_back(auxInterp);
+	}
+
+	// encontra o maior inicio
+	for (int i = 0; i < runsize; ++i)
+	{	
+		if(FulldataX[i][0] > minimum)
+		{
+			minimum = FulldataX[i][0];
+		}
+	}
+
+	// encontra o menor final
+	for (int i = 0; i < runsize; ++i)
+	{
+		if (FulldataX[i][FulldataX[i].size()-1] < maximum)
+		{
+			maximum = FulldataX[i][FulldataX[i].size()-1];
+		}
+	}
+
+	// fazendo as contas e o grafico da media
+	step = (maximum - minimum)/points;
+
+	for (double i = minimum; i < maximum; i = i + step)
+	{
+		avgX.push_back(i);
+		auxAvg = 0;
+
+		for (int j = 0; j < runsize; ++j)
+		{
+			auxAvg = auxAvg + Interp[j]->Eval(i);
+		}
+
+		avgY.push_back(auxAvg/runsize);
+	}
+
+	TGraph* avgG = new TGraph(avgX.size(),&avgX[0],&avgY[0]);
+	avgG->SetTitle("Average");
+	avgG->SetLineWidth(1);
+	avgG->SetLineColor(1);
+	avgG->SetMarkerStyle(20);
+	avgG->SetMarkerSize(1);
+
+	//	faremos agora o grafico deste dados
 	auto grafico = new TCanvas("grafico combinado", "grafico combinado", tamanhoX, tamanhoY);
 	grafico->cd();
 	grafico->SetWindowPosition(960,0);
@@ -86,8 +147,11 @@ void multi_auto()
 	{
 		multigrafico->Add(plot[i]);
 	}
+
+	multigrafico->Add(avgG,"PL k");
+   	
    	multigrafico->SetTitle("; Wavelength (nm); Transmitance (%)");
-	multigrafico->Draw("ALP plc");
+	multigrafico->Draw("AL plc");
 	grafico->BuildLegend();
 
 	return;
@@ -116,7 +180,7 @@ void ajusta_graficos()
 	return;
 }
 
-vector<double> readX(string filename)
+vector<double> readX(int linhas, string filename)
 {
 	double x,y;
 	vector<double> auxX;
@@ -135,7 +199,7 @@ vector<double> readX(string filename)
 
 	// pula uma quantidade de linhas
 
-	for (int j = 0; j < 0; ++j)
+	for (int j = 0; j < linhas; ++j)
 	{
 		fscanf(f, "%*[^\n]\n", NULL);
 	}
@@ -153,7 +217,7 @@ vector<double> readX(string filename)
 	return auxX;
 }
 
-vector<double> readY(string filename)
+vector<double> readY(int linhas, string filename)
 {
 	double x,y;
 	vector<double> auxY;
@@ -172,7 +236,7 @@ vector<double> readY(string filename)
 
 	// pula uma quantidade de linhas
 
-	for (int j = 0; j < 0; ++j)
+	for (int j = 0; j < linhas; ++j)
 	{
 		fscanf(f, "%*[^\n]\n", NULL);
 	}

@@ -57,7 +57,7 @@ void leituracsv()
 
 	double partial 	= 0;
 
-	string name 	("c");
+	string name 	("d");
 	
 	string filename	(name);
 	filename.append	(".asc");
@@ -200,25 +200,25 @@ void leituracsv()
 
 	vector<int> posMax, posMin;
 
-	minX.push_back(mX[14]);
-	minY.push_back(mY[14]);
-	posMin.push_back(14);
+	// minX.push_back(mX[14]);
+	// minY.push_back(mY[14]);
+	// posMin.push_back(14);
 
-	minX.push_back(mX[21]);
-	minY.push_back(mY[21]);
-	posMin.push_back(21);
+	// minX.push_back(mX[21]);
+	// minY.push_back(mY[21]);
+	// posMin.push_back(21);
 
-	minX.push_back(mX[30]);
-	minY.push_back(mY[30]);
-	posMin.push_back(30);
+	// minX.push_back(mX[30]);
+	// minY.push_back(mY[30]);
+	// posMin.push_back(30);
 
-	maxX.push_back(mX[12]);
-	maxY.push_back(mY[12]);
-	posMax.push_back(12);
+	// maxX.push_back(mX[12]);
+	// maxY.push_back(mY[12]);
+	// posMax.push_back(12);
 
-	maxX.push_back(mX[17]);
-	maxY.push_back(mY[17]);
-	posMax.push_back(17);
+	// maxX.push_back(mX[17]);
+	// maxY.push_back(mY[17]);
+	// posMax.push_back(17);
 
 	for (int i = tSize; i < mX.size() - tSize; ++i)
 	{
