@@ -16,6 +16,8 @@ vector<string> namelist(string list);
 
 vector<double> readX(int linhas, string filename);
 vector<double> readY(int linhas, string filename);
+vector<double> readcsvX(int linhas, string filename);
+vector<double> readcsvY(int linhas, string filename);
 
 void multi_auto()
 {
@@ -36,11 +38,11 @@ void multi_auto()
 	std::vector<std::vector<double>> FulldataX;
 	std::vector<std::vector<double>> FulldataY;
 
-	std::vector<double> dataX;
-	std::vector<double> dataY;
+	std::vector<double> dataX, subX;
+	std::vector<double> dataY, subY;
 
-	std::vector<double> avgX;
-	std::vector<double> avgY;
+	std::vector<double> avgX, EavgX;
+	std::vector<double> avgY, EavgY;
 
 	std::vector<TGraph *> plot;
 
@@ -50,6 +52,7 @@ void multi_auto()
 
 	double step;
 	double auxAvg;
+	double auxEAvg;
 
 	double maximum = 10000;
 	double minimum = 0;
@@ -111,17 +114,21 @@ void multi_auto()
 	for (double i = minimum; i < maximum; i = i + step)
 	{
 		avgX.push_back(i);
+		EavgX.push_back(0);
 		auxAvg = 0;
+		auxEAvg = 0;
 
 		for (int j = 0; j < runsize; ++j)
 		{
 			auxAvg = auxAvg + Interp[j]->Eval(i);
+			auxEAvg = auxEAvg + (Interp[j]->Eval(i))*(Interp[j]->Eval(i));
 		}
 
 		avgY.push_back(auxAvg/runsize);
+		EavgY.push_back(0.01*sqrt(auxEAvg)/runsize);
 	}
 
-	TGraph* avgG = new TGraph(avgX.size(),&avgX[0],&avgY[0]);
+	TGraphErrors* avgG = new TGraphErrors(avgX.size(),&avgX[0],&avgY[0],&EavgX[0],&EavgY[0]);
 	avgG->SetTitle("Average");
 	avgG->SetLineWidth(1);
 	avgG->SetLineColor(1);
@@ -137,7 +144,8 @@ void multi_auto()
 	{
 		auto auxplot = new TGraph(FulldataY[i].size(),&FulldataX[i][0],&FulldataY[i][0]);
 		auxplot->SetTitle(fileNames[i].c_str());
-		auxplot->SetLineWidth(2);
+		auxplot->SetLineWidth(1);
+		auxplot->SetLineColor(2);
 		plot.push_back(auxplot);
 	}
 
@@ -148,10 +156,23 @@ void multi_auto()
 		multigrafico->Add(plot[i]);
 	}
 
-	multigrafico->Add(avgG,"PL k");
-   	
-   	multigrafico->SetTitle("; Wavelength (nm); Transmitance (%)");
-	multigrafico->Draw("AL plc");
+	multigrafico->Add(avgG,"PL");
+
+	// colocando o substrato
+	linhas = 1;
+	subX = readcsvX(linhas, "Malitson.csv");
+	subY = readcsvY(linhas, "Malitson.csv"); 
+
+	TGraph* subG = new TGraph(subX.size(),&subX[0],&subY[0]);
+	subG->SetTitle("Quartz");
+	subG->SetLineWidth(2);
+	subG->SetLineColor(2);  
+
+	multigrafico->Add(subG,"PL");
+
+
+   	multigrafico->SetTitle("BisMSB; Wavelength (nm); refractive index");
+	multigrafico->Draw("AL");
 	grafico->BuildLegend();
 
 	return;
@@ -287,4 +308,83 @@ vector<string> namelist(string list)
 	fclose(f);
 
 	return auxNames;
+}
+
+vector<double> readcsvX(int linhas, string filename)
+{
+	double x,y;
+	vector<double> auxX;
+
+	FILE* f = fopen(filename.c_str(),"r");
+	
+	if (f!=NULL)
+	{
+		cout <<"X: '" << filename.c_str() << "' aberto com sucesso." << endl;
+	} 
+	else 
+	{
+		cout <<"X: '" << filename.c_str() << "' Erro!" << endl;
+		return auxX;
+	}
+
+	// pula uma quantidade de linhas
+
+	for (int j = 0; j < linhas; ++j)
+	{
+		fscanf(f, "%*[^\n]\n", NULL);
+	}
+
+	// inicia a leitura do arquivo
+
+	while (fscanf(f,"%lf,%lf\n",&x, &y)!=EOF)
+	{
+		if(x < 10)
+		{
+	 		auxX.push_back(x*1000);
+		}
+		else
+	 		auxX.push_back(x);
+
+ 	}
+
+	fclose(f);
+
+	return auxX;
+}
+
+vector<double> readcsvY(int linhas, string filename)
+{
+	double x,y;
+	vector<double> auxY;
+
+	FILE* f = fopen(filename.c_str(),"r");
+	
+	if (f!=NULL)
+	{
+		cout <<"Y: '" << filename.c_str() << "' aberto com sucesso." << endl;
+	} 
+	else 
+	{
+		cout <<"Y: '" << filename.c_str() << "' Erro!" << endl;
+		return auxY;
+	}
+
+	// pula uma quantidade de linhas
+
+	for (int j = 0; j < linhas; ++j)
+	{
+		fscanf(f, "%*[^\n]\n", NULL);
+	}
+
+	// inicia a leitura do arquivo
+
+	while (fscanf(f,"%lf,%lf\n",&x, &y)!=EOF)
+	{
+		
+ 		auxY.push_back(y);
+ 	}
+
+	fclose(f);
+
+	return auxY;
 }

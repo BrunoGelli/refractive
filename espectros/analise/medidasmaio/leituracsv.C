@@ -27,6 +27,7 @@ void leituracsv()
 	vector<double> minX, 	minY;
 	vector<double> avgX, 	avgY;
 	vector<double> nX, 		nY;
+	vector<double> enX,		enY;
 	vector<double> NX, 		NY;
 	vector<double> nSx, 	nSy;
 	vector<double> simX, 	simY;
@@ -44,6 +45,9 @@ void leituracsv()
 	double 	Tmax;
 	double 	Tmin;
 
+	int maxDisp		= -1;
+	int minDisp		=  1;
+
 	int minWL 		= 430;
 	int maxWL 		= 1000;
 	int minTrans 	= 65;
@@ -57,7 +61,7 @@ void leituracsv()
 
 	double partial 	= 0;
 
-	string name 	("d");
+	string name 	("c");
 	
 	string filename	(name);
 	filename.append	(".asc");
@@ -196,30 +200,28 @@ void leituracsv()
 	OGdataGraph->Draw("ALP");
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// Encontrando os máximos e mínimos de interferência em um intervalo específico. 
+	// criando manualmente alguns pontos. 
 
 	vector<int> posMax, posMin;
+	
+	minX.push_back(mX[21]);
+	minY.push_back(mY[21]);
+	posMin.push_back(21);
+	
+	minX.push_back(mX[30]);
+	minY.push_back(mY[30]);
+	posMin.push_back(30);
 
-	// minX.push_back(mX[14]);
-	// minY.push_back(mY[14]);
-	// posMin.push_back(14);
 
-	// minX.push_back(mX[21]);
-	// minY.push_back(mY[21]);
-	// posMin.push_back(21);
+	maxX.push_back(mX[17]);
+	maxY.push_back(mY[17]);
+	posMax.push_back(17);
 
-	// minX.push_back(mX[30]);
-	// minY.push_back(mY[30]);
-	// posMin.push_back(30);
+// 9 13
 
-	// maxX.push_back(mX[12]);
-	// maxY.push_back(mY[12]);
-	// posMax.push_back(12);
 
-	// maxX.push_back(mX[17]);
-	// maxY.push_back(mY[17]);
-	// posMax.push_back(17);
-
+	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	// Encontrando os máximos e mínimos de interferência em um intervalo específico. 
 	for (int i = tSize; i < mX.size() - tSize; ++i)
 	{
 		test = mY[i];
@@ -238,35 +240,28 @@ void leituracsv()
 
 		if (lmax && mX[i] > minWL && mX[i] < maxWL)
 		{
-			maxX.push_back(mX[i-1]);
-			maxY.push_back(mY[i-1]);
-			posMax.push_back(i-1);
+			maxX.push_back(mX[i+maxDisp]);
+			maxY.push_back(mY[i+maxDisp]);
+			posMax.push_back(i+maxDisp);
 		}
 		if (lmin && mX[i] > minWL && mX[i] < maxWL)
 		{
-			minX.push_back(mX[i+1]);
-			minY.push_back(mY[i+1]);
-			posMin.push_back(i+1);
+			minX.push_back(mX[i+minDisp]);
+			minY.push_back(mY[i+minDisp]);
+			posMin.push_back(i+minDisp);
 		}
 
 		lmax = true;
 		lmin = true;
 	}
 
+	// minX[3] = mX[posMin[3]-1];
+	// minY[3] = mY[posMin[3]-1];
+
 	cout << minX.size() << "  " << maxX.size() << endl;
 	
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// criando os splines de máximo e mínimo a partir dos pontos.
-
-
-	// maxX[0] 	= mX[18];
-	// maxY[0] 	= mY[18];
-	// posMax[0] 	= 18;
-
-	// maxX[1] 	= mX[40];
-	// maxY[1] 	= mY[40];
-	// posMax[1] 	= 40;
-
 
 	TGraph* Gmin = new TGraph(minX.size(),&minX[0],&minY[0]);
 	Gmin->SetTitle("Minimum points");
@@ -292,7 +287,8 @@ void leituracsv()
 
 	Gmax->Draw("same P");	
 	// splineMax->Draw("same");
-	
+
+
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// // fit de maximo
 
@@ -476,13 +472,19 @@ void leituracsv()
 		
 		nX.push_back(NX[i]);
 		nY.push_back(sqrt(NY[i]+sqrt(NY[i]*NY[i] - Nsub*Nsub)));
+
+		enY.push_back(0.01*sqrt(NY[i]+sqrt(NY[i]*NY[i] - Nsub*Nsub)));
+		enX.push_back(0);
 	}
+
+
+
 
 	auto grafico2 = new TCanvas("grafico indice", "grafico indice", tamanhoX, tamanhoY);
 	grafico2->cd();
 	grafico2->SetWindowPosition(960,1920/2);
 
-	TGraph* Gn = new TGraph(nX.size(),&nX[0],&nY[0]);
+	TGraphErrors* Gn = new TGraphErrors(nX.size(),&nX[0],&nY[0],&enX[0],&enY[0]);
 	Gn->SetTitle("Sample refractive index");
 	Gn->SetLineColor(1);
 	Gn->Draw("ALP");
@@ -493,30 +495,30 @@ void leituracsv()
 //	grafico2->BuildLegend();
 
 
-	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-	// importa resultado esperado
+	// // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	// // importa resultado esperado
 
-	FILE* ArqEsp = fopen("swanepoel_example.txt","r"); 
+	// FILE* ArqEsp = fopen("swanepoel_example.txt","r"); 
 
-	vector<double> espX, espY;
+	// vector<double> espX, espY;
 
-	for (int j = 0; j < 0; ++j) 									// pula uma quantidade de linhas
-	{
-		fscanf(ArqEsp, "%*[^\n]\n", NULL);
-	}
+	// for (int j = 0; j < 0; ++j) 									// pula uma quantidade de linhas
+	// {
+	// 	fscanf(ArqEsp, "%*[^\n]\n", NULL);
+	// }
 
-	while(fscanf(ArqEsp,"%lf %lf\n",&AUXdataX,&AUXdataY)!= EOF)	// leitura formatada dos dados 
-	{
-		espX.push_back(AUXdataX);
-		espY.push_back(AUXdataY);
-	}
+	// while(fscanf(ArqEsp,"%lf %lf\n",&AUXdataX,&AUXdataY)!= EOF)	// leitura formatada dos dados 
+	// {
+	// 	espX.push_back(AUXdataX);
+	// 	espY.push_back(AUXdataY);
+	// }
 
-	fclose(ArqEsp);		
+	// fclose(ArqEsp);		
 
-	TGraph* En = new TGraph(espX.size(),&espX[0],&espY[0]);
-	En->SetTitle("Expected refractive index");
-	En->SetMarkerColor(2);
-	En->Draw("same P");
+	// TGraph* En = new TGraph(espX.size(),&espX[0],&espY[0]);
+	// En->SetTitle("Expected refractive index");
+	// En->SetMarkerColor(2);
+	// En->Draw("same P");
 	grafico2->BuildLegend();
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
